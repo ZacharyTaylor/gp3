@@ -41,8 +41,7 @@ class GaussianProcess {
   void computeCovariance();
 
   // get the prediction at the specified time
-  void predict(const ros::Time& prediction_time, double* predicted_value,
-               double* prediction_sd = nullptr);
+  double predict(const ros::Time& prediction_time);
 
  private:
   const std::shared_ptr<Kernel> kernel_;
@@ -54,7 +53,7 @@ class GaussianProcess {
   std::vector<double> time_diffs_;
 
   // covariance
-  Eigen::LDLT<Eigen::MatrixXd> L_llt_;
+  Eigen::MatrixXd L_;
   bool ready_to_predict_;
 
   // needed for predicting values
