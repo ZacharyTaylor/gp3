@@ -14,7 +14,7 @@ class Kernel {
  public:
   Kernel(const double& lengthscale_sd, const double& signal_sd);
 
-  virtual double operator()(const double& a, const double& b) const;
+  virtual double operator()(const double& a, const double& b) const = 0;
 
  protected:
   double lengthscale_var_;
@@ -27,18 +27,12 @@ class SqExpKernel : public Kernel {
   double operator()(const double& a, const double& b) const;
 };
 
-class SqExpAngleWrapKernel : public Kernel {
- public:
-  SqExpAngleWrapKernel(const double& lengthscale_sd, const double& signal_sd);
-  double operator()(const double& a, const double& b) const;
-};
-
 class GaussianProcess {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   GaussianProcess(
-      const Kernel& kernel, const size_t& max_data_points,
+      const std::shared_ptr<Kernel>& kernel, const size_t& max_data_points, const bool& is_angle,
       const double& time_diff_warning = std::numeric_limits<double>::max());
 
   void addDataPoint(const ros::Time& time, const double& data_point,
@@ -51,15 +45,16 @@ class GaussianProcess {
                double* prediction_sd = nullptr);
 
  private:
-  const Kernel kernel_;
+  const std::shared_ptr<Kernel> kernel_;
   const size_t max_data_points_;
+  const bool is_angle_;
   const double time_diff_warning_;
 
   std::list<Data> data_list_;
   std::vector<double> time_diffs_;
 
   // covariance
-  Eigen::LLT<Eigen::MatrixXd> L_llt_;
+  Eigen::LDLT<Eigen::MatrixXd> L_llt_;
   bool ready_to_predict_;
 
   // needed for predicting values
