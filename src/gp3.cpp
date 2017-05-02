@@ -4,7 +4,7 @@
 #include "gp3/gp3.h"
 
 GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
-    : nh_(nh), nh_private_(nh_private), have_data_(false), seq_(0) {
+    : nh_(nh), nh_private_(nh_private), num_data_(0), seq_(0) {
   int queue_size;
   nh_private_.param("queue_size", queue_size, kDefaultQueueSize);
 
@@ -30,48 +30,53 @@ GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
 
   transform_sub_ = nh_.subscribe("input_transform", queue_size,
                                  &GP3::transformCallback, this);
-  transform_pub_ = nh_.advertise<geometry_msgs::TransformStamped>(
-      "output_transform", queue_size);
+  odometry_pub_ = nh_.advertise<nav_msgs::Odometry>(
+      "output_odometry", queue_size);
 }
 
 void GP3::transformCallback(
     const geometry_msgs::TransformStampedConstPtr& transform_msg) {
-
-  static int i = 0;
-  if(i < 3){
-    ++i;
-    return;
-  }
-  i = 0;
+  
   transform_predictor_->addTransformMeasurement(*transform_msg);
   frame_id_ = transform_msg->header.frame_id;
   child_frame_id_ = transform_msg->child_frame_id + "_gp3";
-  have_data_ = true;
+  ++num_data_;
 }
 
 void GP3::timerCallback(const ros::TimerEvent&) {
-
-  if(!have_data_){
+  if (num_data_ < 2) {
     return;
   }
 
-  geometry_msgs::TransformStamped transform_msg;
-  transform_msg.header.seq = seq_++;
-  transform_msg.header.frame_id = frame_id_;
-  transform_msg.child_frame_id = child_frame_id_;
-  transform_msg.header.stamp =
+  nav_msgs::Odometry odometry_msg;
+  odometry_msg.header.seq = seq_++;
+  odometry_msg.header.frame_id = frame_id_;
+  odometry_msg.child_frame_id = child_frame_id_;
+  odometry_msg.header.stamp =
       ros::Time::now() + ros::Duration(prediction_time_offset_);
 
   kindr::minimal::QuatTransformation transform;
-  transform_predictor_->predictTransform(transform_msg.header.stamp,
-                                         &transform);
+  Eigen::Matrix<double, 6, 1> velocity;
+  transform_predictor_->predict(odometry_msg.header.stamp, &transform,
+                                &velocity);
 
   transform = transform * offset_transform_;
-  tf::transformKindrToMsg(transform, &(transform_msg.transform));
+  tf::poseKindrToMsg(transform, &(odometry_msg.pose.pose));
 
-  transform_pub_.publish(transform_msg);
+  odometry_msg.twist.twist.linear.x = velocity[0];
+  odometry_msg.twist.twist.linear.y = velocity[1];
+  odometry_msg.twist.twist.linear.z = velocity[2];
+  odometry_msg.twist.twist.angular.x = velocity[3];
+  odometry_msg.twist.twist.angular.y = velocity[4];
+  odometry_msg.twist.twist.angular.z = velocity[5];
+
+  odometry_pub_.publish(odometry_msg);
 
   if (publish_tf_) {
+    geometry_msgs::TransformStamped transform_msg;
+    transform_msg.header = odometry_msg.header;
+    tf::transformKindrToMsg(transform, &(transform_msg.transform));
+
     br_.sendTransform(transform_msg);
   }
 }

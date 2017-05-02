@@ -17,17 +17,15 @@ double GaussianProcess::kernel(const double& a, const double& b,
   return error;
 }
 
-void GaussianProcess::computeCovariance(const Eigen::VectorXd& time, const Eigen::VectorXd& data) {
-
+void GaussianProcess::computeCovariance(const Eigen::VectorXd& time,
+                                        const Eigen::VectorXd& data) {
   if (time.size() != data.size()) {
-    throw std::runtime_error("time and data must contain same number of points");
+    throw std::runtime_error(
+        "time and data must contain same number of points");
   }
 
   Eigen::MatrixXd K;
   K.resize(data.size(), data.size());
-
-  std::cerr << "data" << std::endl;
-  std::cerr << data << std::endl;
 
   // loop over computing elements of the covariance using the specified
   // kernel. Only lower triangular elements are computed as the others won't
@@ -38,20 +36,36 @@ void GaussianProcess::computeCovariance(const Eigen::VectorXd& time, const Eigen
     }
   }
 
-  // calculate mu (K-1*(data - mean))
-  mu_ = K.llt().solve(data);
+  // calculate alpha (K-1*y)
+  alpha_ = K.llt().solve(data);
   time_ = time;
 }
 
 // get the prediction at the specified time
 double GaussianProcess::predict(const double& prediction_time) {
-  if (mu_.size() == 0) {
+  if (alpha_.size() == 0) {
     throw std::runtime_error("Prediction requested before system was ready");
   }
 
   double predicted_value = 0;
-  for (size_t i = 0; i < mu_.size(); ++i) {
-    predicted_value += kernel(time_[i], prediction_time) * mu_[i];
+  for (size_t i = 0; i < alpha_.size(); ++i) {
+    predicted_value += kernel(time_[i], prediction_time) * alpha_[i];
   }
   return predicted_value;
+}
+
+// get the derivative of the prediction at the specified time
+double GaussianProcess::predictDerivative(const double& prediction_time) {
+  if (alpha_.size() == 0) {
+    throw std::runtime_error("Prediction requested before system was ready");
+  }
+
+  double predicted_derivative = 0;
+  for (size_t i = 0; i < alpha_.size(); ++i) {
+    predicted_derivative += (prediction_time - time_[i]) *
+                            kernel(time_[i], prediction_time) * alpha_[i];
+  }
+
+  predicted_derivative *= -lengthscale_var_;
+  return predicted_derivative;
 }

@@ -5,13 +5,19 @@
 <node name="gp3" pkg="gp3" type="gp3_node">
     <param name="position_lengthscale" value = "0.3"/>
     <param name="orientation_lengthscale" value="0.3"/>
-    <param name="position_signal_noise_sd" value="0.01"/>
-    <param name="orientation_signal_noise_sd" value="0.01"/>
-    <param name="max_data_points" value="50"/>
-    <param name="prediction_rate_hz" value="100"/>
-    <param name="prediction_time_offset" value="0.05"/>
+    <param name="position_signal_noise_sd" value="0.001"/>
+    <param name="orientation_signal_noise_sd" value="0.001"/>
 
-    <remap from="input_transform" to="/vicon/auk/auk"/>
+    <param name="linear_velocity_lengthscale" value = "1.0"/>
+    <param name="angular_velocity_lengthscale" value="1.0"/>
+    <param name="linear_velocity_signal_noise_sd" value="0.1"/>
+    <param name="angular_velocity_signal_noise_sd" value="0.1"/>
+
+    <param name="max_data_points" value="25"/>
+    <param name="prediction_rate_hz" value="100"/>
+    <param name="prediction_time_offset" value="0.0"/>
+
+    <remap from="input_transform" to="/jay/vrpn_client/estimated_transform"/>
 </node>
 
 </launch>

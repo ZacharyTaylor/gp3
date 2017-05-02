@@ -22,12 +22,14 @@ class GaussianProcess {
 
   double predict(const double& prediction_time);
 
+  double predictDerivative(const double& prediction_time);
+
  private:
   const double lengthscale_var_;
   const double signal_var_;
 
   // needed for predicting values
-  Eigen::VectorXd mu_;
+  Eigen::VectorXd alpha_;
   Eigen::VectorXd time_;
 };
 

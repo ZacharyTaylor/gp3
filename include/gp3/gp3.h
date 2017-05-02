@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 
 #include <geometry_msgs/TransformStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
 
 #include "gp3/transform_predictor.h"
@@ -27,7 +28,7 @@ class GP3 {
   ros::NodeHandle nh_private_;
 
   ros::Subscriber transform_sub_;
-  ros::Publisher transform_pub_;
+  ros::Publisher odometry_pub_;
 
   tf::TransformBroadcaster br_;
 
@@ -35,7 +36,7 @@ class GP3 {
 
   double prediction_time_offset_;
 
-  bool have_data_;
+  size_t num_data_;
   std::shared_ptr<TransformPredictor> transform_predictor_;
 
   kindr::minimal::QuatTransformation offset_transform_;
