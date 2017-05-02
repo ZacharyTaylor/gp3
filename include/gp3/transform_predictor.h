@@ -8,31 +8,32 @@
 
 #include "gp3/gaussian_process.h"
 
-
 constexpr int kDefaultMaxDataPoints = 10;
+constexpr double kDefaultMaxDataDifference = 1.0;
 constexpr double kDefaultTimeDiffWarning = 0.25;
 
 class TransformPredictor {
  public:
   struct Config {
-    double x_lengthscale_;
-    double y_lengthscale_;
-    double z_lengthscale_;
+    double x_lengthscale;
+    double y_lengthscale;
+    double z_lengthscale;
 
-    double rx_lengthscale_;
-    double ry_lengthscale_;
-    double rz_lengthscale_;
+    double rx_lengthscale;
+    double ry_lengthscale;
+    double rz_lengthscale;
 
-    double x_signal_noise_sd_;
-    double y_signal_noise_sd_;
-    double z_signal_noise_sd_;
+    double x_signal_noise_sd;
+    double y_signal_noise_sd;
+    double z_signal_noise_sd;
 
-    double rx_signal_noise_sd_;
-    double ry_signal_noise_sd_;
-    double rz_signal_noise_sd_;
+    double rx_signal_noise_sd;
+    double ry_signal_noise_sd;
+    double rz_signal_noise_sd;
 
-    int max_data_points_;
-    double time_diff_warning_;
+    int max_data_points;
+    double max_data_difference;
+    double time_diff_warning;
   };
 
   static Config readConfig(ros::NodeHandle nh, bool group_lengthscale = true,
@@ -52,6 +53,17 @@ class TransformPredictor {
                         kindr::minimal::QuatTransformation* transform);
 
  private:
+  struct TransformData {
+    ros::Time timestamp;
+    kindr::minimal::QuatTransformation transform;
+  };
+
+  const double time_diff_warning_;
+  const double max_data_difference_;
+  const int max_data_points_;
+  
+  std::list<TransformData> transform_data_list_;
+
   GaussianProcess x_gp_;
   GaussianProcess y_gp_;
   GaussianProcess z_gp_;
@@ -61,4 +73,4 @@ class TransformPredictor {
   GaussianProcess rz_gp_;
 };
 
-#endif //GP3_TRANSFORM_PREDICTOR_H
+#endif  // GP3_TRANSFORM_PREDICTOR_H
