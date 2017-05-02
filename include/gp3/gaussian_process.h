@@ -10,30 +10,17 @@
 
 typedef std::pair<ros::Time, double> Data;
 
-class Kernel {
- public:
-  Kernel(const double& lengthscale_sd, const double& signal_sd);
-
-  virtual double operator()(const double& a, const double& b) const = 0;
-
- protected:
-  double lengthscale_var_;
-  double signal_var_;
-};
-
-class SqExpKernel : public Kernel {
- public:
-  SqExpKernel(const double& lengthscale_sd, const double& signal_sd);
-  double operator()(const double& a, const double& b) const;
-};
-
 class GaussianProcess {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   GaussianProcess(
-      const std::shared_ptr<Kernel>& kernel, const size_t& max_data_points, const bool& is_angle,
+      const double& lengthscale_sd, const double& signal_sd,
+      const size_t& max_data_points, const bool& is_angle,
       const double& time_diff_warning = std::numeric_limits<double>::max());
+
+  double kernel(const double& a, const double& b,
+                bool on_diagonal = false) const;
 
   void addDataPoint(const ros::Time& time, const double& data_point,
                     const bool recompute_cov = true);
@@ -44,7 +31,8 @@ class GaussianProcess {
   double predict(const ros::Time& prediction_time);
 
  private:
-  const std::shared_ptr<Kernel> kernel_;
+  const double lengthscale_var_;
+  const double signal_var_;
   const size_t max_data_points_;
   const bool is_angle_;
   const double time_diff_warning_;

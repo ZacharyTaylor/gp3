@@ -38,7 +38,7 @@ void GP3::transformCallback(
     const geometry_msgs::TransformStampedConstPtr& transform_msg) {
 
   static int i = 0;
-  if(i < 10){
+  if(i < 3){
     ++i;
     return;
   }
