@@ -8,10 +8,6 @@ TransformPredictor::Config TransformPredictor::readConfig(
   if (group_lengthscale) {
     double position_lengthscale = readValue(nh, "position_lengthscale");
     double orientation_lengthscale = readValue(nh, "orientation_lengthscale");
-    double linear_velocity_lengthscale =
-        readValue(nh, "linear_velocity_lengthscale");
-    double angular_velocity_lengthscale =
-        readValue(nh, "angular_velocity_lengthscale");
 
     config.x_lengthscale = position_lengthscale;
     config.y_lengthscale = position_lengthscale;
@@ -20,14 +16,6 @@ TransformPredictor::Config TransformPredictor::readConfig(
     config.rx_lengthscale = orientation_lengthscale;
     config.ry_lengthscale = orientation_lengthscale;
     config.rz_lengthscale = orientation_lengthscale;
-
-    config.vx_lengthscale = linear_velocity_lengthscale;
-    config.vy_lengthscale = linear_velocity_lengthscale;
-    config.vz_lengthscale = linear_velocity_lengthscale;
-
-    config.wx_lengthscale = angular_velocity_lengthscale;
-    config.wy_lengthscale = angular_velocity_lengthscale;
-    config.wz_lengthscale = angular_velocity_lengthscale;
 
   } else {
     config.x_lengthscale = readValue(nh, "x_lengthscale");
@@ -38,23 +26,12 @@ TransformPredictor::Config TransformPredictor::readConfig(
     config.ry_lengthscale = readValue(nh, "ry_lengthscale");
     config.rz_lengthscale = readValue(nh, "rz_lengthscale");
 
-    config.vx_lengthscale = readValue(nh, "vx_lengthscale");
-    config.vy_lengthscale = readValue(nh, "vy_lengthscale");
-    config.vz_lengthscale = readValue(nh, "vz_lengthscale");
-
-    config.wx_lengthscale = readValue(nh, "wx_lengthscale");
-    config.wy_lengthscale = readValue(nh, "wy_lengthscale");
-    config.wz_lengthscale = readValue(nh, "wz_lengthscale");
   }
 
   if (group_signal_noise_sd) {
     double position_signal_noise_sd = readValue(nh, "position_signal_noise_sd");
     double orientation_signal_noise_sd =
         readValue(nh, "orientation_signal_noise_sd");
-    double linear_velocity_signal_noise_sd =
-        readValue(nh, "linear_velocity_signal_noise_sd");
-    double angular_velocity_signal_noise_sd =
-        readValue(nh, "angular_velocity_signal_noise_sd");
 
     config.x_signal_noise_sd = position_signal_noise_sd;
     config.y_signal_noise_sd = position_signal_noise_sd;
@@ -64,14 +41,6 @@ TransformPredictor::Config TransformPredictor::readConfig(
     config.ry_signal_noise_sd = orientation_signal_noise_sd;
     config.rz_signal_noise_sd = orientation_signal_noise_sd;
 
-    config.vx_signal_noise_sd = linear_velocity_signal_noise_sd;
-    config.vy_signal_noise_sd = linear_velocity_signal_noise_sd;
-    config.vz_signal_noise_sd = linear_velocity_signal_noise_sd;
-
-    config.wx_signal_noise_sd = angular_velocity_signal_noise_sd;
-    config.wy_signal_noise_sd = angular_velocity_signal_noise_sd;
-    config.wz_signal_noise_sd = angular_velocity_signal_noise_sd;
-
   } else {
     config.x_signal_noise_sd = readValue(nh, "x_signal_noise_sd");
     config.y_signal_noise_sd = readValue(nh, "y_signal_noise_sd");
@@ -80,14 +49,6 @@ TransformPredictor::Config TransformPredictor::readConfig(
     config.rx_signal_noise_sd = readValue(nh, "rx_signal_noise_sd");
     config.ry_signal_noise_sd = readValue(nh, "ry_signal_noise_sd");
     config.rz_signal_noise_sd = readValue(nh, "rz_signal_noise_sd");
-
-    config.vx_signal_noise_sd = readValue(nh, "vx_signal_noise_sd");
-    config.vy_signal_noise_sd = readValue(nh, "vy_signal_noise_sd");
-    config.vz_signal_noise_sd = readValue(nh, "vz_signal_noise_sd");
-
-    config.wx_signal_noise_sd = readValue(nh, "wx_signal_noise_sd");
-    config.wy_signal_noise_sd = readValue(nh, "wy_signal_noise_sd");
-    config.wz_signal_noise_sd = readValue(nh, "wz_signal_noise_sd");
   }
 
   nh.param("max_data_points", config.max_data_points, kDefaultMaxDataPoints);
@@ -129,13 +90,7 @@ TransformPredictor::TransformPredictor(const Config& config)
       z_gp_(config.z_lengthscale, config.z_signal_noise_sd),
       rx_gp_(config.rx_lengthscale, config.rx_signal_noise_sd),
       ry_gp_(config.ry_lengthscale, config.ry_signal_noise_sd),
-      rz_gp_(config.rz_lengthscale, config.rz_signal_noise_sd),
-      vx_gp_(config.vx_lengthscale, config.vx_signal_noise_sd),
-      vy_gp_(config.vy_lengthscale, config.vy_signal_noise_sd),
-      vz_gp_(config.vz_lengthscale, config.vz_signal_noise_sd),
-      wx_gp_(config.wx_lengthscale, config.wx_signal_noise_sd),
-      wy_gp_(config.wy_lengthscale, config.wy_signal_noise_sd),
-      wz_gp_(config.wz_lengthscale, config.wz_signal_noise_sd) {}
+      rz_gp_(config.rz_lengthscale, config.rz_signal_noise_sd) {}
 
 void TransformPredictor::addTransformMeasurement(
     const geometry_msgs::TransformStamped& transform_msg) {
@@ -184,44 +139,6 @@ void TransformPredictor::addTransformMeasurement(
     ++transform_it;
   }
 
-  // now do the same for body velocities
-  std::vector<Eigen::VectorXd> velocities;
-  Eigen::VectorXd velocity_times;
-
-  velocities.resize(6);
-  for (Eigen::VectorXd& velocity : velocities) {
-    velocity.resize(transform_data_list_.size() - 1);
-  }
-  velocity_times.resize(transform_data_list_.size() - 1);
-
-  std::list<TransformData>::const_iterator current_transform_it =
-      transform_data_list_.begin();
-  ++current_transform_it;
-  std::list<TransformData>::const_iterator previous_transform_it =
-      transform_data_list_.begin();
-  for (size_t i = 0; i < transform_data_list_.size() - 1; ++i) {
-    Eigen::Matrix<double, 6, 1> velocity =
-        (previous_transform_it->transform.inverse() *
-         current_transform_it->transform)
-            .log() /
-        (current_transform_it->timestamp - previous_transform_it->timestamp)
-            .toSec();
-
-    for (size_t j = 0; j < velocities.size(); ++j) {
-      velocities[j][i] = velocity[j];
-    }
-    velocity_times[i] = ((current_transform_it->timestamp -
-                          transform_data_list_.back().timestamp)
-                             .toSec() +
-                         (previous_transform_it->timestamp -
-                          transform_data_list_.back().timestamp)
-                             .toSec()) /
-                        2;
-
-    ++previous_transform_it;
-    ++current_transform_it;
-  }
-
   bool crop = false;
   size_t good_measurements = 1;
 
@@ -261,13 +178,6 @@ void TransformPredictor::addTransformMeasurement(
   rx_gp_.computeCovariance(relative_times, relative_log_transforms[3]);
   ry_gp_.computeCovariance(relative_times, relative_log_transforms[4]);
   rz_gp_.computeCovariance(relative_times, relative_log_transforms[5]);
-
-  vx_gp_.computeCovariance(velocity_times, velocities[0]);
-  vy_gp_.computeCovariance(velocity_times, velocities[1]);
-  vz_gp_.computeCovariance(velocity_times, velocities[2]);
-  wx_gp_.computeCovariance(velocity_times, velocities[3]);
-  wy_gp_.computeCovariance(velocity_times, velocities[4]);
-  wz_gp_.computeCovariance(velocity_times, velocities[5]);
 }
 
 void TransformPredictor::predict(
@@ -301,12 +211,12 @@ void TransformPredictor::predict(
   relative_transform_log->coeffRef(5) =
       rz_gp_.predict(relative_prediction_time);
 
-  relative_velocity->coeffRef(0) = vx_gp_.predict(relative_prediction_time);
-  relative_velocity->coeffRef(1) = vy_gp_.predict(relative_prediction_time);
-  relative_velocity->coeffRef(2) = vz_gp_.predict(relative_prediction_time);
-  relative_velocity->coeffRef(3) = wx_gp_.predict(relative_prediction_time);
-  relative_velocity->coeffRef(4) = wy_gp_.predict(relative_prediction_time);
-  relative_velocity->coeffRef(5) = wz_gp_.predict(relative_prediction_time);
+  relative_velocity->coeffRef(0) = x_gp_.predictDerivative(relative_prediction_time);
+  relative_velocity->coeffRef(1) = y_gp_.predictDerivative(relative_prediction_time);
+  relative_velocity->coeffRef(2) = z_gp_.predictDerivative(relative_prediction_time);
+  relative_velocity->coeffRef(3) = rx_gp_.predictDerivative(relative_prediction_time);
+  relative_velocity->coeffRef(4) = ry_gp_.predictDerivative(relative_prediction_time);
+  relative_velocity->coeffRef(5) = rz_gp_.predictDerivative(relative_prediction_time);
 }
 
 void TransformPredictor::predict(const ros::Time& prediction_time,

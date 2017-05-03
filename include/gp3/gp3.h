@@ -36,7 +36,7 @@ class GP3 {
 
   double prediction_time_offset_;
 
-  size_t num_data_;
+  bool have_data_;
   std::shared_ptr<TransformPredictor> transform_predictor_;
 
   kindr::minimal::QuatTransformation offset_transform_;

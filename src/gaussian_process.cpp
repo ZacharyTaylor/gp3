@@ -66,6 +66,6 @@ double GaussianProcess::predictDerivative(const double& prediction_time) {
                             kernel(time_[i], prediction_time) * alpha_[i];
   }
 
-  predicted_derivative *= -lengthscale_var_;
+  predicted_derivative /= -lengthscale_var_;
   return predicted_derivative;
 }

@@ -23,14 +23,6 @@ class TransformPredictor {
     double ry_lengthscale;
     double rz_lengthscale;
 
-    double vx_lengthscale;
-    double vy_lengthscale;
-    double vz_lengthscale;
-
-    double wx_lengthscale;
-    double wy_lengthscale;
-    double wz_lengthscale;
-
     double x_signal_noise_sd;
     double y_signal_noise_sd;
     double z_signal_noise_sd;
@@ -38,14 +30,6 @@ class TransformPredictor {
     double rx_signal_noise_sd;
     double ry_signal_noise_sd;
     double rz_signal_noise_sd;
-
-    double vx_signal_noise_sd;
-    double vy_signal_noise_sd;
-    double vz_signal_noise_sd;
-
-    double wx_signal_noise_sd;
-    double wy_signal_noise_sd;
-    double wz_signal_noise_sd;
 
     int max_data_points;
     double max_data_difference;
@@ -87,14 +71,6 @@ class TransformPredictor {
   GaussianProcess rx_gp_;
   GaussianProcess ry_gp_;
   GaussianProcess rz_gp_;
-
-  GaussianProcess vx_gp_;
-  GaussianProcess vy_gp_;
-  GaussianProcess vz_gp_;
-
-  GaussianProcess wx_gp_;
-  GaussianProcess wy_gp_;
-  GaussianProcess wz_gp_;
 };
 
 #endif  // GP3_TRANSFORM_PREDICTOR_H

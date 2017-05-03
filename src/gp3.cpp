@@ -4,7 +4,7 @@
 #include "gp3/gp3.h"
 
 GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
-    : nh_(nh), nh_private_(nh_private), num_data_(0), seq_(0) {
+    : nh_(nh), nh_private_(nh_private), have_data_(false), seq_(0) {
   int queue_size;
   nh_private_.param("queue_size", queue_size, kDefaultQueueSize);
 
@@ -36,15 +36,14 @@ GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
 
 void GP3::transformCallback(
     const geometry_msgs::TransformStampedConstPtr& transform_msg) {
-  
   transform_predictor_->addTransformMeasurement(*transform_msg);
   frame_id_ = transform_msg->header.frame_id;
   child_frame_id_ = transform_msg->child_frame_id + "_gp3";
-  ++num_data_;
+  have_data_ = true;
 }
 
 void GP3::timerCallback(const ros::TimerEvent&) {
-  if (num_data_ < 2) {
+  if (!have_data_) {
     return;
   }
 
