@@ -2,7 +2,7 @@
 <package format="2">
   <name>gp3</name>
   <version>0.0.0</version>
-  <description>pose upsampling through baseless guessing</description>
+  <description>imu filtering through baseless guessing</description>
 
   <author email="ztaylor@ethz.ch">Zachary Taylor</author>
 
@@ -16,7 +16,4 @@
   <depend>roscpp</depend>
   <depend>roslib</depend>
   <depend>eigen_catkin</depend>   
-  <depend>glog_catkin</depend>
-  <depend>minkindr</depend>
-  <depend>minkindr_conversions</depend>
 </package>

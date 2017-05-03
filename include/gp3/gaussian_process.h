@@ -12,25 +12,36 @@ class GaussianProcess {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  GaussianProcess(
+  GaussianProcess(const size_t& max_data_points,
       const double& lengthscale_sd, const double& signal_sd);
 
-  double kernel(const double& a, const double& b,
+  double kernel(const ros::Time& a, const ros::Time& b,
                 bool on_diagonal = false) const;
 
-  void computeCovariance(const Eigen::VectorXd& time, const Eigen::VectorXd& data);
+  void addDataPoint(const ros::Time& time, const double& value);
 
-  double predict(const double& prediction_time);
+  void computeCovariance();
 
-  double predictDerivative(const double& prediction_time);
+  double predict(const ros::Time& prediction_time);
+
+  double predictDerivative(const ros::Time& prediction_time);
 
  private:
+
+  struct Data{
+    ros::Time time;
+    double value;
+  };
+
+  const size_t max_data_points_;
   const double lengthscale_var_;
   const double signal_var_;
 
+  //stored data
+  std::list<Data> data_list_;
+
   // needed for predicting values
   Eigen::VectorXd alpha_;
-  Eigen::VectorXd time_;
 };
 
 #endif  // GP3_GAUSSIAN_PROCESS_H

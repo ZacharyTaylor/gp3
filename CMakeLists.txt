@@ -12,7 +12,7 @@ add_definitions(-std=c++11)
 cs_add_library(${PROJECT_NAME}
   src/gaussian_process.cpp
   src/gp3.cpp
-  src/transform_predictor.cpp
+  src/imu_predictor.cpp
 )
 
 ############
