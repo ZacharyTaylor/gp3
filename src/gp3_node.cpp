@@ -9,5 +9,6 @@ int main(int argc, char** argv) {
   GP3 gp3(nh, nh_private);
 
   ros::spin();
+
   return 0;
 }
