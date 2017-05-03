@@ -106,10 +106,6 @@ void TransformPredictor::addTransformMeasurement(
     transform_data_list_.pop_front();
   }
 
-  if(transform_data_list_.size() <= 1){
-    return;
-  }
-
   // setup containers
   std::vector<Eigen::VectorXd> relative_log_transforms;
   Eigen::VectorXd relative_times;

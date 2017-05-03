@@ -12,6 +12,9 @@ GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
   nh_private_.param("prediction_rate_hz", prediction_rate_hz,
                     kDefaultPredictionRateHz);
 
+  nh_private_.param("take_every_nth_transform", take_every_nth_transform_,
+                    kDefaultTakeEveryNthTransform);
+
   nh_private_.param("prediction_time_offset", prediction_time_offset_,
                     kDefaultPredictionTimeOffset);
 
@@ -36,10 +39,17 @@ GP3::GP3(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
 
 void GP3::transformCallback(
     const geometry_msgs::TransformStampedConstPtr& transform_msg) {
-  transform_predictor_->addTransformMeasurement(*transform_msg);
-  frame_id_ = transform_msg->header.frame_id;
-  child_frame_id_ = transform_msg->child_frame_id + "_gp3";
-  have_data_ = true;
+
+  static int counter = 0;
+  ++counter;
+
+  if(counter >= take_every_nth_transform_){
+    counter = 0;
+    transform_predictor_->addTransformMeasurement(*transform_msg);
+    frame_id_ = transform_msg->header.frame_id;
+    child_frame_id_ = transform_msg->child_frame_id + "_gp3";
+    have_data_ = true;
+  }
 }
 
 void GP3::timerCallback(const ros::TimerEvent&) {

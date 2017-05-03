@@ -12,6 +12,7 @@
 constexpr int kDefaultQueueSize = 100;
 constexpr double kDefaultPredictionRateHz = 100;
 constexpr double kDefaultPredictionTimeOffset = 0;
+constexpr int kDefaultTakeEveryNthTransform = 1;
 constexpr bool kDefaultPublishTF = true;
 
 class GP3 {
@@ -35,6 +36,7 @@ class GP3 {
   ros::Timer timer_;
 
   double prediction_time_offset_;
+  int take_every_nth_transform_;
 
   bool have_data_;
   std::shared_ptr<TransformPredictor> transform_predictor_;

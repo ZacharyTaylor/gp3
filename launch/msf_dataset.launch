@@ -3,17 +3,13 @@
 <param name="/use_sim_time" value="true"/>
 
 <node name="gp3" pkg="gp3" type="gp3_node">
-    <param name="position_lengthscale" value = "0.6"/>
-    <param name="orientation_lengthscale" value="0.6"/>
-    <param name="position_signal_noise_sd" value="0.01"/>
-    <param name="orientation_signal_noise_sd" value="0.01"/>
+    <param name="position_lengthscale" value = "6"/>
+    <param name="orientation_lengthscale" value="6"/>
+    <param name="position_signal_noise_sd" value="0.05"/>
+    <param name="orientation_signal_noise_sd" value="0.05"/>
 
-    <param name="linear_velocity_lengthscale" value = "1.0"/>
-    <param name="angular_velocity_lengthscale" value="1.0"/>
-    <param name="linear_velocity_signal_noise_sd" value="0.1"/>
-    <param name="angular_velocity_signal_noise_sd" value="0.1"/>
-
-    <param name="max_data_points" value="25"/>
+    <param name="max_data_points" value="50"/>
+    <param name="take_every_nth_transform" value="10"/>
     <param name="prediction_rate_hz" value="100"/>
     <param name="prediction_time_offset" value="0.0"/>
 
