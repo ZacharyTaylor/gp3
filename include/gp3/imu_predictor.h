@@ -5,6 +5,7 @@
 
 #include "gp3/gaussian_process.h"
 #include "sensor_msgs/Imu.h"
+#include "geometry_msgs/Vector3.h"
 
 constexpr int kDefaultMaxDataPoints = 10;
 
@@ -20,6 +21,8 @@ class ImuPredictor {
     int max_data_points;
   };
 
+  enum class Element : size_t {WX, WY, WZ, AX, AY, AZ};
+
   static Config readConfig(const ros::NodeHandle& nh);
 
   static double readValue(const ros::NodeHandle& nh,
@@ -29,23 +32,21 @@ class ImuPredictor {
 
   void addMeasurement(const sensor_msgs::Imu& msg);
 
-  void setupPrediction();
+  void addMeasurement(const Element& element, const ros::Time& time,
+                                  const double& value);
+
+  void setFrameID(std::string frame_id);
 
   sensor_msgs::Imu predict(const ros::Time& prediction_time);
 
  private:
+
+  GaussianProcess& get_gp(const Element& element);
+
   uint64_t seq_;
   std::string frame_id_;
 
-  bool is_setup_;
-
-  GaussianProcess wx_gp_;
-  GaussianProcess wy_gp_;
-  GaussianProcess wz_gp_;
-
-  GaussianProcess ax_gp_;
-  GaussianProcess ay_gp_;
-  GaussianProcess az_gp_;
+  std::vector<GaussianProcess> gp_vector_;
 };
 
 #endif  // GP3_Imu_PREDICTOR_H

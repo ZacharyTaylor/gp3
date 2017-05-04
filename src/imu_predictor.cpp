@@ -30,66 +30,52 @@ double ImuPredictor::readValue(const ros::NodeHandle& nh,
   return value;
 }
 
-ImuPredictor::ImuPredictor(const Config& config)
-    : wx_gp_(config.max_data_points, config.w_l, config.w_sd),
-      wy_gp_(config.max_data_points, config.w_l, config.w_sd),
-      wz_gp_(config.max_data_points, config.w_l, config.w_sd),
-      ax_gp_(config.max_data_points, config.a_l, config.a_sd),
-      ay_gp_(config.max_data_points, config.a_l, config.a_sd),
-      az_gp_(config.max_data_points, config.a_l, config.a_sd) {}
+ImuPredictor::ImuPredictor(const Config& config) {
+  gp_vector_.emplace_back(config.max_data_points, config.w_l, config.w_sd);
+  gp_vector_.emplace_back(config.max_data_points, config.w_l, config.w_sd);
+  gp_vector_.emplace_back(config.max_data_points, config.w_l, config.w_sd);
+
+  gp_vector_.emplace_back(config.max_data_points, config.a_l, config.a_sd);
+  gp_vector_.emplace_back(config.max_data_points, config.a_l, config.a_sd);
+  gp_vector_.emplace_back(config.max_data_points, config.a_l, config.a_sd);
+}
 
 void ImuPredictor::addMeasurement(const sensor_msgs::Imu& msg) {
   frame_id_ = msg.header.frame_id;
 
-  wx_gp_.addDataPoint(msg.header.stamp, msg.angular_velocity.x);
-  wy_gp_.addDataPoint(msg.header.stamp, msg.angular_velocity.y);
-  wz_gp_.addDataPoint(msg.header.stamp, msg.angular_velocity.z);
+  addMeasurement(Element::WX, msg.header.stamp, msg.angular_velocity.x);
+  addMeasurement(Element::WY, msg.header.stamp, msg.angular_velocity.y);
+  addMeasurement(Element::WZ, msg.header.stamp, msg.angular_velocity.z);
 
-  ax_gp_.addDataPoint(msg.header.stamp, msg.linear_acceleration.x);
-  ay_gp_.addDataPoint(msg.header.stamp, msg.linear_acceleration.y);
-  az_gp_.addDataPoint(msg.header.stamp, msg.linear_acceleration.z);
-
-  is_setup_ = false;
+  addMeasurement(Element::AX, msg.header.stamp, msg.linear_acceleration.x);
+  addMeasurement(Element::AY, msg.header.stamp, msg.linear_acceleration.y);
+  addMeasurement(Element::AZ, msg.header.stamp, msg.linear_acceleration.z);
 }
 
-// note this is the most computationally expensive function and so is separated
-// from prediction so that calling predict(ros::Time::now()) is as accurate
-// and undelayed as possible
-void ImuPredictor::setupPrediction() {
-  if (is_setup_) {
-    return;
-  }
-
-  wx_gp_.computeCovariance();
-  wy_gp_.computeCovariance();
-  wz_gp_.computeCovariance();
-
-  ax_gp_.computeCovariance();
-  ay_gp_.computeCovariance();
-  az_gp_.computeCovariance();
-
-  is_setup_ = true;
+void ImuPredictor::addMeasurement(const Element& element, const ros::Time& time,
+                                  const double& value) {
+  get_gp(element).addDataPoint(time, value);
 }
+
+GaussianProcess& ImuPredictor::get_gp(const Element& element){
+    return gp_vector_[static_cast<size_t>(element)];
+}
+
+void ImuPredictor::setFrameID(std::string frame_id) { frame_id_ = frame_id; }
 
 sensor_msgs::Imu ImuPredictor::predict(const ros::Time& prediction_time) {
-  if (!is_setup_) {
-    throw std::runtime_error(
-        "Prediction requested before system was setup, run setupPrediction "
-        "first");
-  }
-
   sensor_msgs::Imu msg;
   msg.header.seq = seq_++;
   msg.header.frame_id = frame_id_;
   msg.header.stamp = prediction_time;
 
-  msg.angular_velocity.x = wx_gp_.predict(prediction_time);
-  msg.angular_velocity.y = wy_gp_.predict(prediction_time);
-  msg.angular_velocity.z = wz_gp_.predict(prediction_time);
+  msg.angular_velocity.x = get_gp(Element::WX).predict(prediction_time);
+  msg.angular_velocity.y = get_gp(Element::WY).predict(prediction_time);
+  msg.angular_velocity.z = get_gp(Element::WZ).predict(prediction_time);
 
-  msg.linear_acceleration.x = ax_gp_.predict(prediction_time);
-  msg.linear_acceleration.y = ay_gp_.predict(prediction_time);
-  msg.linear_acceleration.z = az_gp_.predict(prediction_time);
+  msg.linear_acceleration.x = get_gp(Element::AX).predict(prediction_time);
+  msg.linear_acceleration.x = get_gp(Element::AY).predict(prediction_time);
+  msg.linear_acceleration.x = get_gp(Element::AZ).predict(prediction_time);
 
   return msg;
 }

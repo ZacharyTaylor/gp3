@@ -28,11 +28,13 @@ void GaussianProcess::addDataPoint(const ros::Time& time, const double& value) {
   if (data_list_.size() > max_data_points_) {
     data_list_.pop_front();
   }
+
+  cov_ready_ = false;
 }
 
 void GaussianProcess::computeCovariance() {
   if (data_list_.size() == 0) {
-    return;
+    throw std::runtime_error("Prediction requested before system was ready");
   }
 
   Eigen::MatrixXd K;
@@ -56,14 +58,16 @@ void GaussianProcess::computeCovariance() {
     ++it_i;
   }
 
+  K_llt_ = K.llt();
+
   // calculate alpha (K-1*y)
-  alpha_ = K.llt().solve(data);
+  alpha_ = K_llt_.solve(data);
 }
 
 // get the prediction at the specified time
 double GaussianProcess::predict(const ros::Time& prediction_time) {
-  if (alpha_.size() == 0) {
-    throw std::runtime_error("Prediction requested before system was ready");
+  if (!cov_ready_) {
+    computeCovariance();
   }
 
   double predicted_value = 0;
@@ -75,10 +79,28 @@ double GaussianProcess::predict(const ros::Time& prediction_time) {
   return predicted_value;
 }
 
+// get the uncertainty of the prediction at the specified time
+double GaussianProcess::predictVariance(const ros::Time& prediction_time) {
+  if (!cov_ready_) {
+    computeCovariance();
+  }
+
+  Eigen::VectorXd K_s;
+  K_s.resize(data_list_.size());
+  std::list<Data>::const_iterator it = data_list_.begin();
+  for (size_t i = 0; i < alpha_.size(); ++i) {
+    K_s(i) = kernel(it->time, prediction_time);
+    ++it;
+  }
+
+  Eigen::MatrixXd var = K_s.transpose() * K_llt_.solve(K_s);
+  return kernel(prediction_time, prediction_time, true) - var(0, 0);
+}
+
 // get the derivative of the prediction at the specified time
 double GaussianProcess::predictDerivative(const ros::Time& prediction_time) {
-  if (alpha_.size() == 0) {
-    throw std::runtime_error("Prediction requested before system was ready");
+  if (!cov_ready_) {
+    computeCovariance();
   }
 
   double predicted_derivative = 0;
