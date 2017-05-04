@@ -74,8 +74,8 @@ sensor_msgs::Imu ImuPredictor::predict(const ros::Time& prediction_time) {
   msg.angular_velocity.z = get_gp(Element::WZ).predict(prediction_time);
 
   msg.linear_acceleration.x = get_gp(Element::AX).predict(prediction_time);
-  msg.linear_acceleration.x = get_gp(Element::AY).predict(prediction_time);
-  msg.linear_acceleration.x = get_gp(Element::AZ).predict(prediction_time);
+  msg.linear_acceleration.y = get_gp(Element::AY).predict(prediction_time);
+  msg.linear_acceleration.z = get_gp(Element::AZ).predict(prediction_time);
 
   return msg;
 }
